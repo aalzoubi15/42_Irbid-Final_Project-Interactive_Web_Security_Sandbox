@@ -35,8 +35,6 @@ Ghurir/
   tests/
     smoke-tests.js
   README.md
-  COMPLIANCE_CHECKLIST.md
-  INSTRUCTOR_APPROVAL_MESSAGE.md
 ```
 
 There are exactly four website pages: one home page and three lab pages.
@@ -88,11 +86,3 @@ Do not submit this placeholder as the final URL. No repository or live URL has b
 - CSV output is rendered as escaped text. The browser does not evaluate formulas or open a spreadsheet. The fixed export uses a tab prefix for formula-like cells; that technique has application-specific trade-offs and must be tested against the team's target spreadsheet workflow.
 - Redirect handling returns a decision object and shows the proposed destination. It never sets `window.location`, sends a redirect response, or contacts `attacker.example`.
 - The vulnerable snippets model unsafe application logic. The local simulations intentionally isolate effects to keep the training website safe.
-
-## Before submission
-
-- Obtain staff approval for the three selected vulnerabilities. The official brief says approval must happen before building; this package should therefore be treated as a review build until staff approval is confirmed.
-- Confirm that the three choices are not duplicated by another team member/team.
-- Run the included tests and the manual checklist in `COMPLIANCE_CHECKLIST.md`.
-- Deploy and test the actual live URL. This ZIP does not contain a live deployment.
-- For 42 Amman, the PDF states the submission deadline is **Saturday 21 November 2026 at 11:59 PM**. 42 Irbid students should confirm their deadline with staff.
