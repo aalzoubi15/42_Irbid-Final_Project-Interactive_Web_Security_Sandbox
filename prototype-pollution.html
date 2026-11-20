@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Safely explore prototype pollution with an isolated JavaScript object simulation.">
+  <meta name="theme-color" content="#0b1118">
+  <title>Prototype Pollution | Ghurir</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/main.js" defer></script>
+  <script src="js/prototype-pollution.js" defer></script>
+</head>
+<body>
+  <header class="topbar"><div class="shell nav-wrap">
+    <a class="brand" href="index.html" aria-label="Ghurir home"><span class="brand-mark">G</span><span>GHURIR<span class="brand-dot">.</span></span></a>
+    <nav class="main-nav" aria-label="Main navigation"><a href="index.html">Overview</a><a href="prototype-pollution.html" aria-current="page">Prototype Pollution</a><a href="csv-injection.html">CSV Injection</a><a href="open-redirect.html">Open Redirect</a></nav>
+    <span class="nav-note"><span class="status-dot"></span> LOCAL SANDBOX</span>
+  </div></header>
+  <main>
+    <section class="shell lab-heading">
+      <div class="breadcrumbs"><a href="index.html">Overview</a><span>/</span><span>Lab 01</span></div>
+      <p class="eyebrow">LAB 01 / JAVASCRIPT OBJECTS</p>
+      <h1>Prototype <span>Pollution</span></h1>
+      <p class="lab-lede">An unsafe merge can write attacker-controlled keys through a special property and change what other objects appear to contain. This lab uses a private prototype object so the effect is visible without touching the browser's global <code>Object.prototype</code>.</p>
+      <div class="tag-row"><span class="tag">CWE-1321</span><span class="tag">OWASP WSTG-INJT-22</span><span class="tag tag-muted">No global prototype changes</span></div>
+    </section>
+
+    <section class="shell lab-grid">
+      <div class="lab-primary">
+        <section class="panel experiment-panel" aria-labelledby="try-title">
+          <div class="panel-heading">
+            <div><p class="eyebrow">INTERACTIVE DEMONSTRATION</p><h2 id="try-title">Try the merge</h2></div>
+            <div class="mode-switch" role="group" aria-label="Demonstration mode"><button type="button" class="mode-button is-active" data-mode="vulnerable" aria-pressed="true">Vulnerable</button><button type="button" class="mode-button" data-mode="fixed" aria-pressed="false">Fixed</button></div>
+          </div>
+          <div class="mode-banner mode-banner-bad" id="mode-banner"><span class="banner-dot"></span><div><strong>Vulnerable mode</strong><small>Untrusted keys are merged without a denylist.</small></div></div>
+          <div class="payload-heading"><span>CHOOSE A PAYLOAD</span><span>3 SAFE EXAMPLES</span></div>
+          <div class="payload-list" id="payload-list">
+            <button type="button" class="payload-button is-selected" data-payload-index="0"><span class="payload-number">01</span><span><strong>Add a role</strong><code>{"__proto__":{"role":"admin"}}</code></span><span class="payload-arrow">↗</span></button>
+            <button type="button" class="payload-button" data-payload-index="1"><span class="payload-number">02</span><span><strong>Enable export</strong><code>{"__proto__":{"canExport":true}}</code></span><span class="payload-arrow">↗</span></button>
+            <button type="button" class="payload-button" data-payload-index="2"><span class="payload-number">03</span><span><strong>Mark trusted</strong><code>{"__proto__":{"trusted":true}}</code></span><span class="payload-arrow">↗</span></button>
+          </div>
+          <div class="result-panel" id="result-panel" aria-live="polite">
+            <div class="result-heading"><span class="result-label">RESULT</span><span class="result-state state-bad" id="result-state">PROPERTY INJECTED</span></div>
+            <div class="result-body" id="result-body"><div class="result-main"><span class="result-key">role</span><strong>admin</strong><small>Visible through the local prototype chain</small></div><div class="result-side"><span>OWN PROPERTY</span><strong id="own-property">No</strong><span>GLOBAL OBJECT.PROTOTYPE</span><strong class="good-text" id="global-check">Unchanged</strong></div></div>
+          </div>
+          <p class="experiment-note" id="experiment-note">The unsafe merge follows the target's <code>__proto__</code> accessor into a private prototype object. The injected property is inherited by this demo target only.</p>
+        </section>
+
+        <section class="panel code-panel">
+          <div class="panel-heading code-heading"><div><p class="eyebrow">INSPECT THE SOURCE</p><h2>Where the bug lives</h2></div><span class="code-language">JAVASCRIPT</span></div>
+          <div class="code-columns">
+            <div class="code-card"><div class="code-card-heading"><span>VULNERABLE CODE</span><span class="code-pill code-pill-bad">RISKY LINE</span></div><pre class="code-block"><code><span class="code-line">function vulnerableMerge(target, source) {</span><span class="code-line">  for (const key of Object.keys(source)) {</span><span class="code-line">    const value = source[key];</span><span class="code-line">    if (value && typeof value === "object") {</span><span class="code-line">      const child = target[key] || {};</span><span class="code-line is-risky">      target[key] = vulnerableMerge(child, value);</span><span class="code-line">    } else {</span><span class="code-line">      target[key] = value;</span><span class="code-line">    }</span><span class="code-line">  }</span><span class="code-line">  return target;</span><span class="code-line">}</span><span class="code-line">const base = {};</span><span class="code-line">const target = Object.create(base);</span><span class="code-line">vulnerableMerge(target, JSON.parse(payload));</span></code></pre><p class="code-explain"><strong>Why it is unsafe:</strong> the merge reads <code>target[key]</code> without checking whether the key is special. For <code>__proto__</code>, it recurses into the target's prototype.</p></div>
+            <div class="code-card"><div class="code-card-heading"><span>FIXED CODE</span><span class="code-pill code-pill-good">GUARD LINE</span></div><pre class="code-block"><code><span class="code-line">const BLOCKED_KEYS = new Set(["__proto__", "prototype", "constructor"]);</span><span class="code-line">function safeMerge(target, source, rejected = []) {</span><span class="code-line">  for (const key of Object.keys(source)) {</span><span class="code-line is-fixed">    if (BLOCKED_KEYS.has(key)) { rejected.push(key); continue; }</span><span class="code-line">    const value = source[key];</span><span class="code-line">    if (value && typeof value === "object" && !Array.isArray(value)) {</span><span class="code-line">      const child = Object.prototype.hasOwnProperty.call(target, key) ? target[key] : Object.create(null);</span><span class="code-line">      target[key] = child;</span><span class="code-line">      safeMerge(child, value, rejected);</span><span class="code-line">    } else target[key] = value;</span><span class="code-line">  }</span><span class="code-line">  return rejected;</span><span class="code-line">}</span><span class="code-line">const target = Object.create(null);</span><span class="code-line">const rejected = safeMerge(target, JSON.parse(payload));</span></code></pre><p class="code-explain"><strong>Why it works:</strong> special keys are rejected before recursion, and the destination has no inherited prototype to traverse.</p></div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="lab-aside">
+        <section class="panel aside-panel"><p class="eyebrow">WHAT IT IS</p><h2>Changing the chain</h2><p>JavaScript objects can inherit properties from another object called a prototype. Prototype pollution happens when untrusted input changes that prototype, so code may see properties it never set itself.</p><p class="classification"><strong>OWASP:</strong> WSTG-INJT-22 (testing reference). <strong>CWE:</strong> CWE-1321. No direct OWASP Top 10 category is claimed here.</p></section>
+        <section class="panel aside-panel impact-panel"><p class="eyebrow">WHY IT MATTERS</p><h2>Unexpected trust</h2><p>If application code treats an inherited flag as an authorization decision, an attacker may influence behavior, expose data, or cause a crash. The impact depends on a later piece of code that uses the polluted property.</p><div class="incident-note"><span>DOCUMENTED CASE</span><strong>CVE-2020-8203</strong><p>IBM documented prototype pollution in affected lodash/UrbanCode Velocity components, with denial of service as a concern. This is a published vulnerability advisory, not a claim of confirmed in-the-wild exploitation.</p></div></section>
+        <section class="panel aside-panel fix-panel"><p class="eyebrow">THE FIX</p><h2>Reject dangerous keys</h2><ul><li>Reject <code>__proto__</code>, <code>constructor</code>, and <code>prototype</code>.</li><li>Build data objects with <code>Object.create(null)</code> when suitable.</li><li>Validate input shape and avoid unsafe recursive merges.</li></ul><p class="small-note">The demo resets its private objects for every run. It never mutates <code>Object.prototype</code>.</p></section>
+      </aside>
+    </section>
+  </main>
+  <footer class="site-footer"><div class="shell footer-inner"><span>GHURIR <span class="brand-dot">.</span> LAB 01</span><a href="index.html">← Back to overview</a></div></footer>
+</body>
+</html>

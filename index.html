@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Ghurir is an interactive, browser-only web security sandbox with three safe vulnerability demonstrations.">
+  <meta name="theme-color" content="#0b1118">
+  <title>Ghurir | Interactive Web Security Sandbox</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/main.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell nav-wrap">
+      <a class="brand" href="index.html" aria-label="Ghurir home"><span class="brand-mark">G</span><span>GHURIR<span class="brand-dot">.</span></span></a>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="index.html" aria-current="page">Overview</a>
+        <a href="prototype-pollution.html">Prototype Pollution</a>
+        <a href="csv-injection.html">CSV Injection</a>
+        <a href="open-redirect.html">Open Redirect</a>
+      </nav>
+      <span class="nav-note"><span class="status-dot"></span> LOCAL SANDBOX</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="shell home-hero">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="eyebrow-line"></span> WEB SECURITY TRAINING / 01</p>
+        <h1>See the flaw.<br><span>Run the fix.</span></h1>
+        <p class="hero-lede">A hands-on sandbox for understanding three web application weaknesses. Trigger a safe simulation, inspect the vulnerable line, then run the exact same input against the fixed version.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#labs">Explore the labs <span aria-hidden="true">→</span></a>
+          <span class="micro-note"><span class="status-dot"></span> No backend. No external requests.</span>
+        </div>
+      </div>
+      <div class="hero-console" aria-label="How the sandbox works">
+        <div class="console-top"><span class="console-lights"><i></i><i></i><i></i></span><span>GHURIR / DEMO FLOW</span><span class="console-live">● LIVE</span></div>
+        <div class="console-body">
+          <div class="console-step"><span class="step-number">01</span><div><small>INPUT</small><strong>Choose a harmless payload</strong></div><span class="step-state">READY</span></div>
+          <div class="console-connector"></div>
+          <div class="console-step"><span class="step-number">02</span><div><small>VULNERABLE MODE</small><strong>Observe the unsafe behavior</strong></div><span class="state-bad">TRIGGERED</span></div>
+          <div class="console-connector"></div>
+          <div class="console-step"><span class="step-number">03</span><div><small>FIXED MODE</small><strong>Replay the same input safely</strong></div><span class="state-good">BLOCKED</span></div>
+        </div>
+        <div class="console-foot"><span>SIMULATION ONLY</span><span>JS / HTML / CSS</span></div>
+      </div>
+    </section>
+
+    <section class="shell section-block" id="labs">
+      <div class="section-heading">
+        <div><p class="eyebrow">THREE INTERACTIVE LABS</p><h2>Choose a weakness to explore</h2></div>
+        <p class="section-side-note">Each lab includes vulnerable code, working payload buttons, a fix, and a clear explanation.</p>
+      </div>
+      <div class="lab-cards">
+        <article class="lab-card">
+          <div class="card-topline"><span class="lab-index">LAB 01</span><span class="difficulty">CHALLENGE</span></div>
+          <div class="card-icon icon-prototype" aria-hidden="true"><span>{ }</span></div>
+          <h3>Prototype Pollution</h3>
+          <p>See how an unsafe object merge can add an unexpected property to an object's prototype chain.</p>
+          <div class="card-meta"><span>CWE-1321</span><span>JavaScript</span></div>
+          <a class="card-link" href="prototype-pollution.html">Open lab <span aria-hidden="true">↗</span></a>
+        </article>
+        <article class="lab-card">
+          <div class="card-topline"><span class="lab-index">LAB 02</span><span class="difficulty">OUTPUT HANDLING</span></div>
+          <div class="card-icon icon-csv" aria-hidden="true"><span>Σ</span></div>
+          <h3>CSV / Formula Injection</h3>
+          <p>Watch how a spreadsheet may interpret untrusted CSV values as formulas instead of plain text.</p>
+          <div class="card-meta"><span>CWE-1236</span><span>CSV export</span></div>
+          <a class="card-link" href="csv-injection.html">Open lab <span aria-hidden="true">↗</span></a>
+        </article>
+        <article class="lab-card">
+          <div class="card-topline"><span class="lab-index">LAB 03</span><span class="difficulty">REDIRECT VALIDATION</span></div>
+          <div class="card-icon icon-redirect" aria-hidden="true"><span>↗</span></div>
+          <h3>Open Redirect</h3>
+          <p>Compare a redirect that trusts a supplied URL with one that accepts only approved local paths.</p>
+          <div class="card-meta"><span>CWE-601</span><span>URL handling</span></div>
+          <a class="card-link" href="open-redirect.html">Open lab <span aria-hidden="true">↗</span></a>
+        </article>
+      </div>
+    </section>
+
+    <section class="shell how-section">
+      <div class="how-intro"><p class="eyebrow">HOW TO USE GHURIR</p><h2>One payload.<br><span>Two outcomes.</span></h2><p>Start in Vulnerable mode and press a payload. Read the result. Switch to Fixed mode: the selected payload is replayed automatically so you can compare the behavior directly.</p></div>
+      <div class="how-steps">
+        <div class="how-row"><span>01</span><div><h3>Pick a payload</h3><p>Use one of the provided harmless examples.</p></div></div>
+        <div class="how-row"><span>02</span><div><h3>Observe the result</h3><p>The lab explains what the unsafe code did inside an isolated simulation.</p></div></div>
+        <div class="how-row"><span>03</span><div><h3>Switch to Fixed</h3><p>The same input is checked by the corrected logic. No real attack or navigation occurs.</p></div></div>
+      </div>
+    </section>
+
+    <section class="shell safety-strip">
+      <div class="safety-symbol" aria-hidden="true">✓</div>
+      <div><strong>Designed for safe learning</strong><p>All demonstrations run locally in your browser. They do not contact third-party websites, execute spreadsheet formulas, alter the global JavaScript prototype, or redirect you away from this site.</p></div>
+      <span class="safety-tag">BROWSER-ONLY</span>
+    </section>
+  </main>
+
+  <footer class="site-footer"><div class="shell footer-inner"><span>GHURIR <span class="brand-dot">.</span> INTERACTIVE WEB SECURITY SANDBOX</span><span>Built for learning · <span data-year>2026</span></span></div></footer>
+</body>
+</html>

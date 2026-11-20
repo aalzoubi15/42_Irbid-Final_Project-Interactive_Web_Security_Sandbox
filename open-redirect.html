@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore unvalidated redirects with a safe, non-navigating browser simulation.">
+  <meta name="theme-color" content="#0b1118">
+  <title>Open Redirect | Ghurir</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/main.js" defer></script>
+  <script src="js/open-redirect.js" defer></script>
+</head>
+<body>
+  <header class="topbar"><div class="shell nav-wrap">
+    <a class="brand" href="index.html" aria-label="Ghurir home"><span class="brand-mark">G</span><span>GHURIR<span class="brand-dot">.</span></span></a>
+    <nav class="main-nav" aria-label="Main navigation"><a href="index.html">Overview</a><a href="prototype-pollution.html">Prototype Pollution</a><a href="csv-injection.html">CSV Injection</a><a href="open-redirect.html" aria-current="page">Open Redirect</a></nav>
+    <span class="nav-note"><span class="status-dot"></span> LOCAL SANDBOX</span>
+  </div></header>
+  <main>
+    <section class="shell lab-heading">
+      <div class="breadcrumbs"><a href="index.html">Overview</a><span>/</span><span>Lab 03</span></div>
+      <p class="eyebrow">LAB 03 / URL VALIDATION</p>
+      <h1>Unvalidated <span>Redirects</span></h1>
+      <p class="lab-lede">A redirect is risky when it trusts a visitor-supplied destination. This simulation shows the choice but never navigates or contacts the example domain.</p>
+      <div class="tag-row"><span class="tag">CWE-601</span><span class="tag">OWASP Top 10:2025 A01</span><span class="tag tag-muted">No external navigation</span></div>
+    </section>
+
+    <section class="shell lab-grid">
+      <div class="lab-primary">
+        <section class="panel experiment-panel" aria-labelledby="try-title">
+          <div class="panel-heading">
+            <div><p class="eyebrow">INTERACTIVE DEMONSTRATION</p><h2 id="try-title">Try a redirect target</h2></div>
+            <div class="mode-switch" role="group" aria-label="Demonstration mode"><button type="button" class="mode-button is-active" data-mode="vulnerable" aria-pressed="true">Vulnerable</button><button type="button" class="mode-button" data-mode="fixed" aria-pressed="false">Fixed</button></div>
+          </div>
+          <div class="mode-banner mode-banner-bad" id="mode-banner"><span class="banner-dot"></span><div><strong>Vulnerable mode</strong><small>Any supplied destination is accepted by the simulated handler.</small></div></div>
+          <div class="payload-heading"><span>CHOOSE A DESTINATION</span><span>2 UNTRUSTED + 1 VALID</span></div>
+          <div class="payload-list" id="payload-list">
+            <button type="button" class="payload-button is-selected" data-payload-index="0"><span class="payload-number">01</span><span><strong>External login page</strong><code>https://attacker.example/login</code></span><span class="payload-arrow">↗</span></button>
+            <button type="button" class="payload-button" data-payload-index="1"><span class="payload-number">02</span><span><strong>Protocol-relative URL</strong><code>//attacker.example/landing</code></span><span class="payload-arrow">↗</span></button>
+            <button type="button" class="payload-button" data-payload-index="2"><span class="payload-number">03</span><span><strong>Approved local path</strong><code>/dashboard</code></span><span class="payload-arrow">↗</span></button>
+          </div>
+          <div class="redirect-preview" aria-live="polite">
+            <div class="preview-title"><span>SIMULATED REDIRECT DECISION</span><span id="redirect-state" class="state-bad">ACCEPTED</span></div>
+            <div class="destination-box"><span>PROPOSED DESTINATION</span><strong id="destination-value">https://attacker.example/login</strong><small id="destination-detail">The unvalidated value would be used as the Location destination.</small></div>
+            <div class="redirect-decision" id="redirect-decision"><span class="decision-icon" aria-hidden="true">!</span><div><strong>Untrusted destination accepted</strong><p>The demo displays the proposed redirect only. It never sends a 302 response or opens the destination.</p></div></div>
+          </div>
+          <p class="experiment-note" id="experiment-note">Switching modes automatically replays the selected destination so you can compare the same input.</p>
+        </section>
+
+        <section class="panel code-panel">
+          <div class="panel-heading code-heading"><div><p class="eyebrow">INSPECT THE SOURCE</p><h2>Where the bug lives</h2></div><span class="code-language">JAVASCRIPT</span></div>
+          <div class="code-columns">
+            <div class="code-card"><div class="code-card-heading"><span>VULNERABLE CODE</span><span class="code-pill code-pill-bad">TRUSTED INPUT</span></div><pre class="code-block"><code><span class="code-line">function vulnerableRedirect(destination) {</span><span class="code-line">  return {</span><span class="code-line">    status: 302,</span><span class="code-line is-risky">    location: destination,</span><span class="code-line">    accepted: true</span><span class="code-line">  };</span><span class="code-line">}</span><span class="code-line">const decision = vulnerableRedirect(userInput);</span><span class="code-line">renderDecision(decision); // local preview only</span></code></pre><p class="code-explain"><strong>Why it is unsafe:</strong> the handler returns a redirect destination directly from untrusted input. A real server might place it in a <code>Location</code> response header.</p></div>
+            <div class="code-card"><div class="code-card-heading"><span>FIXED CODE</span><span class="code-pill code-pill-good">ALLOWLIST</span></div><pre class="code-block"><code><span class="code-line">const ALLOWED = new Set(["/dashboard", "/reports", "/help"]);</span><span class="code-line">function fixedRedirect(destination) {</span><span class="code-line is-fixed">  if (!ALLOWED.has(destination)) {</span><span class="code-line">    return { status: 400, location: null, accepted: false };</span><span class="code-line">  }</span><span class="code-line">  return { status: 302, location: destination, accepted: true };</span><span class="code-line">}</span><span class="code-line">const decision = fixedRedirect(userInput);</span><span class="code-line">renderDecision(decision); // local preview only</span></code></pre><p class="code-explain"><strong>Why it works:</strong> only exact local paths on the allowlist are accepted. External and ambiguous destinations fail closed.</p></div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="lab-aside">
+        <section class="panel aside-panel"><p class="eyebrow">WHAT IT IS</p><h2>A trusted domain as a detour</h2><p>An open redirect trusts a visitor-supplied URL and sends them there without validation. A phishing link can hide behind a familiar domain.</p><p class="classification"><strong>OWASP:</strong> Top 10:2025 A01 (Broken Access Control), which lists CWE-601. <strong>CWE:</strong> CWE-601.</p></section>
+        <section class="panel aside-panel impact-panel"><p class="eyebrow">WHY IT MATTERS</p><h2>Trust can be borrowed</h2><p>A visitor may trust the first domain, then land on a lookalike site. Redirects can support phishing or OAuth abuse, but do not alone steal credentials.</p><div class="incident-note"><span>DOCUMENTED CASE</span><strong>CVE-2022-28923</strong><p>NVD documents Caddy v2.4.6's open redirect (CVE-2022-28923), which could send users to phishing sites; this does not establish a victim compromise.</p></div></section>
+        <section class="panel aside-panel fix-panel"><p class="eyebrow">THE FIX</p><h2>Allow only known paths</h2><ul><li>Prefer a destination ID mapped to a local path.</li><li>For local redirects, use a framework's local-URL helper.</li><li>If external targets are essential, compare parsed URL components against an explicit allowlist.</li></ul><p class="small-note">Do not rely on string prefix checks such as <code>startsWith("https://trusted.example")</code>.</p></section>
+      </aside>
+    </section>
+  </main>
+  <footer class="site-footer"><div class="shell footer-inner"><span>GHURIR <span class="brand-dot">.</span> LAB 03</span><a href="index.html">← Back to overview</a></div></footer>
+</body>
+</html>

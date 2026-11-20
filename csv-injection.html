@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Safely explore CSV formula injection and spreadsheet-safe output handling.">
+  <meta name="theme-color" content="#0b1118">
+  <title>CSV Injection | Ghurir</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/main.js" defer></script>
+  <script src="js/csv-injection.js" defer></script>
+</head>
+<body>
+  <header class="topbar"><div class="shell nav-wrap">
+    <a class="brand" href="index.html" aria-label="Ghurir home"><span class="brand-mark">G</span><span>GHURIR<span class="brand-dot">.</span></span></a>
+    <nav class="main-nav" aria-label="Main navigation"><a href="index.html">Overview</a><a href="prototype-pollution.html">Prototype Pollution</a><a href="csv-injection.html" aria-current="page">CSV Injection</a><a href="open-redirect.html">Open Redirect</a></nav>
+    <span class="nav-note"><span class="status-dot"></span> LOCAL SANDBOX</span>
+  </div></header>
+  <main>
+    <section class="shell lab-heading">
+      <div class="breadcrumbs"><a href="index.html">Overview</a><span>/</span><span>Lab 02</span></div>
+      <p class="eyebrow">LAB 02 / OUTPUT HANDLING</p>
+      <h1>CSV / Formula <span>Injection</span></h1>
+      <p class="lab-lede">CSV is plain text, but spreadsheet apps may interpret formula-leading cells. This local preview never evaluates formulas or opens a spreadsheet.</p>
+      <div class="tag-row"><span class="tag">CWE-1236</span><span class="tag">OWASP WSTG-INJT-21</span><span class="tag tag-muted">No formula execution</span></div>
+    </section>
+
+    <section class="shell lab-grid">
+      <div class="lab-primary">
+        <section class="panel experiment-panel" aria-labelledby="try-title">
+          <div class="panel-heading">
+            <div><p class="eyebrow">INTERACTIVE DEMONSTRATION</p><h2 id="try-title">Try a CSV cell</h2></div>
+            <div class="mode-switch" role="group" aria-label="Demonstration mode"><button type="button" class="mode-button is-active" data-mode="vulnerable" aria-pressed="true">Vulnerable</button><button type="button" class="mode-button" data-mode="fixed" aria-pressed="false">Fixed</button></div>
+          </div>
+          <div class="mode-banner mode-banner-bad" id="mode-banner"><span class="banner-dot"></span><div><strong>Vulnerable mode</strong><small>Cells are quoted but formula prefixes are not neutralized.</small></div></div>
+          <div class="payload-heading"><span>CHOOSE A VALUE</span><span>3 HARMLESS EXAMPLES</span></div>
+          <div class="payload-list" id="payload-list">
+            <button type="button" class="payload-button is-selected" data-payload-index="0"><span class="payload-number">01</span><span><strong>Simple addition</strong><code>=1+1</code></span><span class="payload-arrow">↗</span></button>
+            <button type="button" class="payload-button" data-payload-index="1"><span class="payload-number">02</span><span><strong>Plus prefix</strong><code>+1+1</code></span><span class="payload-arrow">↗</span></button>
+            <button type="button" class="payload-button" data-payload-index="2"><span class="payload-number">03</span><span><strong>Function-like prefix</strong><code>@SUM(1,2)</code></span><span class="payload-arrow">↗</span></button>
+          </div>
+          <div class="csv-preview" aria-live="polite">
+            <div class="preview-title"><span>GENERATED CSV TEXT</span><span id="csv-state" class="state-bad">FORMULA-LIKE CELL</span></div>
+            <pre class="csv-output" id="csv-output">"Name"\r\n"=1+1"</pre>
+            <div class="spreadsheet-hypothesis" id="spreadsheet-hypothesis"><span class="sheet-icon" aria-hidden="true">▦</span><div><strong>Spreadsheet interpretation risk</strong><p>A spreadsheet may parse <code>=1+1</code> as a formula and calculate <strong>2</strong>. This preview does not execute it.</p></div></div>
+          </div>
+          <p class="experiment-note" id="experiment-note">CSV quoting protects the file structure, but it does not stop a spreadsheet from interpreting a formula at the start of a cell.</p>
+        </section>
+
+        <section class="panel code-panel">
+          <div class="panel-heading code-heading"><div><p class="eyebrow">INSPECT THE SOURCE</p><h2>Where the bug lives</h2></div><span class="code-language">JAVASCRIPT</span></div>
+          <div class="code-columns">
+            <div class="code-card"><div class="code-card-heading"><span>VULNERABLE CODE</span><span class="code-pill code-pill-bad">RISKY OUTPUT</span></div><pre class="code-block"><code><span class="code-line">function vulnerableCsvCell(value) {</span><span class="code-line">  const text = String(value ?? "");</span><span class="code-line">  const escaped = text.replaceAll('"', '""');</span><span class="code-line is-risky">  return `"${escaped}"`;</span><span class="code-line">}</span><span class="code-line">function vulnerableExport(userInput) {</span><span class="code-line">  const header = vulnerableCsvCell("Name");</span><span class="code-line">  const cell = vulnerableCsvCell(userInput);</span><span class="code-line">  return `${header}\r\n${cell}`;</span><span class="code-line">}</span><span class="code-line">const csvText = vulnerableExport(payload);</span></code></pre><p class="code-explain"><strong>Why it is unsafe:</strong> quotes and commas are escaped, but a cell beginning with <code>=</code>, <code>+</code>, <code>-</code>, or <code>@</code> can still be treated as a formula by a spreadsheet.</p></div>
+            <div class="code-card"><div class="code-card-heading"><span>FIXED CODE</span><span class="code-pill code-pill-good">NEUTRALIZED</span></div><pre class="code-block"><code><span class="code-line">function fixedCsvCell(value) {</span><span class="code-line">  const text = String(value ?? "");</span><span class="code-line">  const startsWithFormula = /^[\u0000-\u0020]*[=+\-@＝＋－＠]/u.test(text);</span><span class="code-line is-fixed">  const safeText = startsWithFormula ? `\t${text}` : text;</span><span class="code-line">  const escaped = safeText.replaceAll('"', '""');</span><span class="code-line">  return `"${escaped}"`;</span><span class="code-line">}</span><span class="code-line">function fixedExport(userInput) {</span><span class="code-line">  const header = fixedCsvCell("Name");</span><span class="code-line">  const cell = fixedCsvCell(userInput);</span><span class="code-line">  return `${header}\r\n${cell}`;</span><span class="code-line">}</span></code></pre><p class="code-explain"><strong>Why it works:</strong> a tab is placed inside the quoted cell before a formula-like prefix. This Excel-oriented mitigation must still be tested in the spreadsheet apps used by the organization.</p></div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="lab-aside">
+        <section class="panel aside-panel"><p class="eyebrow">WHAT IT IS</p><h2>Text that becomes a formula</h2><p>CSV injection occurs when untrusted exported values are interpreted as formulas by spreadsheet software.</p><p class="classification"><strong>OWASP:</strong> WSTG-INJT-21 (testing reference). <strong>CWE:</strong> CWE-1236. No direct OWASP Top 10 mapping is asserted.</p></section>
+        <section class="panel aside-panel impact-panel"><p class="eyebrow">WHY IT MATTERS</p><h2>Exports can carry risk</h2><p>A user-submitted value may later be opened by staff in a spreadsheet. Depending on the application, a formula may alter the sheet, mislead readers, or enable more serious actions.</p><div class="incident-note"><span>DOCUMENTED CASE</span><strong>CVE-2019-4521</strong><p>IBM documented CSV injection in Cloud Pak System's Platform System Manager (CVE-2019-4521) and published a fix. This is an advisory, not proof of exploitation.</p></div></section>
+        <section class="panel aside-panel fix-panel"><p class="eyebrow">THE FIX</p><h2>Neutralize each cell</h2><ul><li>Handle formula prefixes, including relevant whitespace and control characters.</li><li>Quote every cell and double embedded quotation marks.</li><li>Test the export in the spreadsheet programs and save/reopen workflows actually used.</li></ul><p class="small-note">There is no universal CSV sanitization strategy. The tab prefix can remain in imported data and may affect downstream processing.</p></section>
+      </aside>
+    </section>
+  </main>
+  <footer class="site-footer"><div class="shell footer-inner"><span>GHURIR <span class="brand-dot">.</span> LAB 02</span><a href="index.html">← Back to overview</a></div></footer>
+</body>
+</html>
